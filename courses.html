@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar Kursus Moodle</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link 
+    href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" 
+    rel="stylesheet"
+  >
+  <script>
+    let courses = [];
+    let currentPage = 1;
+    const coursesPerPage = 6;
+
+    async function fetchCourses() {
+      const moodleUrl = 'https://papeda.papuakasih.sch.id/webservice/rest/server.php';
+      const params = new URLSearchParams({
+        wstoken: 'd3a280eb7e7f553713334ee65754fe12',
+        wsfunction: 'core_course_get_courses',
+        moodlewsrestformat: 'json'
+      });
+
+      try {
+        const response = await fetch(`${moodleUrl}?${params.toString()}`);
+        if (!response.ok) throw new Error(`HTTP Error! Status: ${response.status}`);
+        courses = await response.json();
+        displayCourses();
+        setupPagination();
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+      }
+    }
+
+    function displayCourses() {
+      const courseContainer = document.getElementById('courses');
+      const button = document.getElementById('addButton');
+      const startIndex = (currentPage - 1) * coursesPerPage;
+      const endIndex = startIndex + coursesPerPage;
+      const paginatedCourses = courses.slice(startIndex, endIndex);
+
+      button.innerHTML = '<div class="mb-4"><a href="#" class="btn btn-primary"><i class="fa-solid fa-folder-plus"></i> Tambah</a> <a href="index.html" class="btn btn-outline-dark border-0 float-end"><i class="fa-solid fa-right-from-bracket"></i> Keluar</a></div>';
+      paginatedCourses.forEach(course => {
+        if (course.id > 1) {
+          const courseImage = course.courseimageurl ? 
+                              `<img src="${course.courseimageurl}" class="card-img-top" alt="Image for ${course.fullname}">` :
+                              `<img src="https://papeda.papuakasih.sch.id/theme/moove/pix/default_course.jpg" class="card-img-top" alt="Image not available">`;
+
+          const courseCard = `
+            <div class="col-md-4 mb-4">
+              <div class="card h-100">
+                ${courseImage}
+                <div class="card-body">
+                  <h5 class="card-title">${course.fullname}</h5>
+                  <p class="card-text"><strong>ID:</strong> ${course.id}</p>
+                  <p class="card-text"><strong>Short Name:</strong> ${course.shortname}</p>
+                  <a href="detail.html?id=${course.id}" class="btn btn-success"><i class="fa-solid fa-file-lines"></i> Detail</a>
+                  <a href="ubah.html?id=${course.id}" class="btn btn-outline-warning border-0"><i class="fa-solid fa-file-pen"></i></a>
+                  <a href="hapus.html?id=${course.id}" class="btn btn-outline-danger border-0"><i class="fa-solid fa-trash"></i></a>
+                </div>
+              </div>
+            </div>
+          `;
+          courseContainer.innerHTML += courseCard;
+        }
+      });
+    }
+
+    function setupPagination() {
+      const totalPages = Math.ceil(courses.length / coursesPerPage);
+      const paginationContainer = document.getElementById('pagination');
+      paginationContainer.innerHTML = ''; // Reset pagination
+
+      for (let i = 1; i <= totalPages; i++) {
+        const pageButton = document.createElement('button');
+        pageButton.classList.add('btn', 'btn-outline-primary', 'mx-1');
+        pageButton.innerText = i;
+        pageButton.onclick = () => changePage(i);
+        if (i === currentPage) {
+          pageButton.classList.add('active');
+        }
+        paginationContainer.appendChild(pageButton);
+      }
+    }
+
+    function changePage(pageNumber) {
+      currentPage = pageNumber;
+      displayCourses();
+      setupPagination();
+    }
+
+    // Fetch courses automatically when page loads
+    window.onload = fetchCourses;
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center my-5">Daftar Kursus Moodle</h1>
+    <div class="" id="addButton"></div>
+    <div class="row" id="courses"></div>
+    <div class="text-center my-4" id="pagination"></div>
+  </div>
+  <script 
+    src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js">
+  </script>
+</body>
+</html>

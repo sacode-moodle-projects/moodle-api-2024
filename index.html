@@ -3,99 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daftar Kursus Moodle</title>
+  <title>Moodle Login</title>
   <link 
     href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" 
     rel="stylesheet"
   >
   <script>
-    let courses = [];
-    let currentPage = 1;
-    const coursesPerPage = 6;
+    // Function to handle login
+    async function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
 
-    async function fetchCourses() {
+      // Check if the username and password are filled
+      if (!username || !password) {
+        alert("Please enter both username and password.");
+        return;
+      }
+
       const moodleUrl = 'https://papeda.papuakasih.sch.id/webservice/rest/server.php';
       const params = new URLSearchParams({
         wstoken: 'd3a280eb7e7f553713334ee65754fe12',
-        wsfunction: 'core_course_get_courses',
-        moodlewsrestformat: 'json'
+        wsfunction: 'core_user_get_users',
+        moodlewsrestformat: 'json',
       });
+
+      // Adding the criteria to the request dynamically
+      params.append('criteria[0][key]', 'username');
+      params.append('criteria[0][value]', username);
 
       try {
+        // Fetch data from Moodle API to validate login
         const response = await fetch(`${moodleUrl}?${params.toString()}`);
         if (!response.ok) throw new Error(`HTTP Error! Status: ${response.status}`);
-        courses = await response.json();
-        displayCourses();
-        setupPagination();
+
+        const users = await response.json();
+
+        if (users && users.length > 0) {
+          const user = users[0];
+          // Here you can compare the password if available or use another Moodle function to authenticate
+          alert(`Welcome, ${user.firstname} ${user.lastname}`);
+          // Redirect to another page if login is successful
+          window.location.href = 'index.html'; // Redirect to dashboard or homepage after login
+        } else {
+          alert('Invalid username or password.');
+        }
       } catch (error) {
-        console.error('Error fetching courses:', error);
+        console.error('Error logging in:', error);
+        alert('Error logging in. Please try again.');
       }
     }
-
-    function displayCourses() {
-      const courseContainer = document.getElementById('courses');
-      const startIndex = (currentPage - 1) * coursesPerPage;
-      const endIndex = startIndex + coursesPerPage;
-      const paginatedCourses = courses.slice(startIndex, endIndex);
-
-      courseContainer.innerHTML = '<h2 class="text-center my-4">Daftar Kursus</h2>';
-      paginatedCourses.forEach(course => {
-        if (course.id > 1) {
-          const courseImage = course.courseimageurl ? 
-                              `<img src="${course.courseimageurl}" class="card-img-top" alt="Image for ${course.fullname}">` :
-                              `<img src="https://papeda.papuakasih.sch.id/theme/moove/pix/default_course.jpg" class="card-img-top" alt="Image not available">`;
-
-          const courseCard = `
-            <div class="col-md-4 mb-4">
-              <div class="card h-100">
-                ${courseImage}
-                <div class="card-body">
-                  <h5 class="card-title">${course.fullname}</h5>
-                  <p class="card-text"><strong>ID:</strong> ${course.id}</p>
-                  <p class="card-text"><strong>Short Name:</strong> ${course.shortname}</p>
-                  <a href="detail.html?id=${course.id}" class="btn btn-primary">Detail</a>
-                </div>
-              </div>
-            </div>
-          `;
-          courseContainer.innerHTML += courseCard;
-        }
-      });
-    }
-
-    function setupPagination() {
-      const totalPages = Math.ceil(courses.length / coursesPerPage);
-      const paginationContainer = document.getElementById('pagination');
-      paginationContainer.innerHTML = ''; // Reset pagination
-
-      for (let i = 1; i <= totalPages; i++) {
-        const pageButton = document.createElement('button');
-        pageButton.classList.add('btn', 'btn-outline-primary', 'mx-1');
-        pageButton.innerText = i;
-        pageButton.onclick = () => changePage(i);
-        if (i === currentPage) {
-          pageButton.classList.add('active');
-        }
-        paginationContainer.appendChild(pageButton);
-      }
-    }
-
-    function changePage(pageNumber) {
-      currentPage = pageNumber;
-      displayCourses();
-      setupPagination();
-    }
-
-    // Fetch courses automatically when page loads
-    window.onload = fetchCourses;
   </script>
 </head>
 <body>
-  <div class="container">
-    <h1 class="text-center my-5">Daftar Kursus Moodle</h1>
-    <div class="row" id="courses"></div>
-    <div class="text-center my-4" id="pagination"></div>
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-lg-4 mx-auto">
+        <h2 class="text-center mb-4">Login</h2>
+        <div class="card">
+          <div class="card-body">
+            <form>
+              <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" placeholder="Enter your username" value="sethy.wai" required>
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" placeholder="Enter your password" value="sethy.wai" required>
+              </div>
+              <a href="courses.html" class="btn btn-primary w-100">Login</a>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </div>
+
   <script 
     src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js">
   </script>

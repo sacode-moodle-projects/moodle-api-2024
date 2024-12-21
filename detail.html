@@ -13,26 +13,54 @@
       const urlParams = new URLSearchParams(window.location.search);
       const courseId = urlParams.get('id');
 
+      if (!courseId) {
+        alert('Course ID is missing in the URL');
+        return;
+      }
+
       const moodleUrl = 'https://papeda.papuakasih.sch.id/webservice/rest/server.php';
-      const params = new URLSearchParams({
-        wstoken: 'd3a280eb7e7f553713334ee65754fe12',
-        wsfunction: 'core_course_get_courses',
-        moodlewsrestformat: 'json'
-      });
+      const token = 'd3a280eb7e7f553713334ee65754fe12';
 
       try {
-        const response = await fetch(`${moodleUrl}?${params.toString()}`);
-        if (!response.ok) throw new Error(`HTTP Error! Status: ${response.status}`);
-        const courses = await response.json();
+        // Fetch course details
+        const courseParams = new URLSearchParams({
+          wstoken: token,
+          wsfunction: 'core_course_get_courses',
+          moodlewsrestformat: 'json'
+        });
+
+        const courseResponse = await fetch(`${moodleUrl}?${courseParams.toString()}`);
+        const courses = await courseResponse.json();
 
         const course = courses.find(c => c.id == courseId);
         if (course) {
           displayCourseDetails(course);
+          fetchCourseActivities(courseId);
         } else {
           console.error('Course not found');
         }
       } catch (error) {
         console.error('Error fetching course details:', error);
+      }
+    }
+
+    async function fetchCourseActivities(courseId) {
+      const moodleUrl = 'https://papeda.papuakasih.sch.id/webservice/rest/server.php';
+      const token = 'd3a280eb7e7f553713334ee65754fe12';
+
+      const activityParams = new URLSearchParams({
+        wstoken: token,
+        wsfunction: 'core_course_get_contents',
+        courseid: courseId,
+        moodlewsrestformat: 'json'
+      });
+
+      try {
+        const response = await fetch(`${moodleUrl}?${activityParams.toString()}`);
+        const activities = await response.json();
+        displayCourseActivities(activities);
+      } catch (error) {
+        console.error('Error fetching course activities:', error);
       }
     }
 
@@ -54,10 +82,40 @@
             <p><strong>Deskripsi:</strong> ${course.summary || 'Tidak ada deskripsi.'}</p>
           </div>
         </div>
-        <div class="text-center my-4">
-          <a href="index.html" class="btn btn-secondary">Kembali ke Daftar Kursus</a>
-        </div>
       `;
+    }
+
+    function displayCourseActivities(contents) {
+      const activitiesContainer = document.getElementById('courseActivities');
+      activitiesContainer.innerHTML = '';
+
+      contents.forEach(section => {
+        if (section.modules && section.modules.length > 0) {
+          const sectionCard = document.createElement('div');
+          sectionCard.className = 'card mb-3';
+
+          const sectionBody = `
+            <div class="card-header">${section.name || 'General'}</div>
+            <div class="card-body">
+              <ul class="list-group">
+                ${section.modules
+                  .map(
+                    module => `
+                  <li class="list-group-item">
+                    <strong>${module.name}</strong>
+                    ${module.description ? `<p>${module.description}</p>` : ''}
+                  </li>
+                `
+                  )
+                  .join('')}
+              </ul>
+            </div>
+          `;
+
+          sectionCard.innerHTML = sectionBody;
+          activitiesContainer.appendChild(sectionCard);
+        }
+      });
     }
 
     // Fetch course details when the page loads
@@ -69,6 +127,8 @@
     <div class="row">
       <div class="col-lg-6 mx-auto">
         <div id="courseDetails"></div>
+        <h3 class="my-4">Aktivitas Kursus</h3>
+        <div id="courseActivities"></div>
       </div>
     </div>
   </div>
