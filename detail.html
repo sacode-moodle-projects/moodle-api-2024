@@ -3,70 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Detail Kursus</title>
+  <title>Detail Kursus Moodle</title>
   <link 
     href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" 
     rel="stylesheet"
   >
   <script>
-    async function fetchCourseDetail() {
-      const params = new URLSearchParams(window.location.search);
-      const courseId = params.get('id');
-      if (!courseId) {
-        document.getElementById('course-detail').innerHTML = '<p>ID kursus tidak ditemukan.</p>';
-        return;
-      }
+    async function fetchCourseDetails() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const courseId = urlParams.get('id');
 
       const moodleUrl = 'https://papeda.papuakasih.sch.id/webservice/rest/server.php';
-      const apiParams = new URLSearchParams({
+      const params = new URLSearchParams({
         wstoken: 'd3a280eb7e7f553713334ee65754fe12',
         wsfunction: 'core_course_get_courses',
         moodlewsrestformat: 'json'
       });
 
       try {
-        const response = await fetch(`${moodleUrl}?${apiParams.toString()}`);
+        const response = await fetch(`${moodleUrl}?${params.toString()}`);
         if (!response.ok) throw new Error(`HTTP Error! Status: ${response.status}`);
         const courses = await response.json();
+
         const course = courses.find(c => c.id == courseId);
-        if (!course) {
-          document.getElementById('course-detail').innerHTML = '<p>Kursus tidak ditemukan.</p>';
-          return;
+        if (course) {
+          displayCourseDetails(course);
+        } else {
+          console.error('Course not found');
         }
-        displayCourseDetail(course);
       } catch (error) {
-        console.error('Error fetching course detail:', error);
-        document.getElementById('course-detail').innerHTML = '<p>Error memuat detail kursus.</p>';
+        console.error('Error fetching course details:', error);
       }
     }
 
-    function displayCourseDetail(course) {
+    function displayCourseDetails(course) {
+      const courseContainer = document.getElementById('courseDetails');
+      
       const courseImage = course.courseimageurl ? 
-                          `<img src="${course.courseimageurl}" class="img-fluid mb-4" alt="Image for ${course.fullname}">` :
-                          `<img src="https://via.placeholder.com/150" class="img-fluid mb-4" alt="Image not available">`;
+                          `<img src="${course.courseimageurl}" class="img-fluid card-img-top" alt="Image for ${course.fullname}">` :
+                          `<img src="https://papeda.papuakasih.sch.id/theme/moove/pix/default_course.jpg" class="img-fluid card-img-top" alt="Image not available">`;
 
-      const courseDetail = `
+      courseContainer.innerHTML = `
+        <h2 class="text-center my-4">${course.fullname}</h2>
         <div class="card">
-          <div class="card-header">
-            <h5>${course.fullname}</h5>
-          </div>
+          ${courseImage}
           <div class="card-body">
-            ${courseImage}
-            <p><strong>ID:</strong> ${course.id}</p>
-            <p><strong>Short Name:</strong> ${course.shortname}</p>
-            <p><strong>Summary:</strong> ${course.summary || 'Tidak ada deskripsi.'}</p>
-            <a href="index.html" class="btn btn-secondary">Kembali</a>
+            <h5 class="card-title">Detail Kursus</h5>
+            <p><strong>ID Kursus:</strong> ${course.id}</p>
+            <p><strong>Nama Singkat:</strong> ${course.shortname}</p>
+            <p><strong>Deskripsi:</strong> ${course.summary || 'Tidak ada deskripsi.'}</p>
           </div>
         </div>
+        <div class="text-center my-4">
+          <a href="index.html" class="btn btn-secondary">Kembali ke Daftar Kursus</a>
+        </div>
       `;
-      document.getElementById('course-detail').innerHTML = courseDetail;
     }
+
+    // Fetch course details when the page loads
+    window.onload = fetchCourseDetails;
   </script>
 </head>
-<body onload="fetchCourseDetail()">
+<body>
   <div class="container">
-    <h1 class="text-center my-5">Detail Kursus</h1>
-    <div id="course-detail"></div>
+    <div class="row">
+      <div class="col-lg-6 mx-auto">
+        <div id="courseDetails"></div>
+      </div>
+    </div>
   </div>
   <script 
     src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js">
