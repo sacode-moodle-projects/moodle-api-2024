@@ -27,6 +27,9 @@
            border-radius: 50%;
            object-fit: cover;
        }
+       .pagination {
+           margin-bottom: 0;
+       }
    </style>
 </head>
 <body>
@@ -71,6 +74,7 @@
                                <tr>
                                    <th>Foto</th>
                                    <th>Username</th>
+                                   <th>Nama Lengkap</th>
                                    <th>Email</th>
                                    <th>Aksi</th>
                                </tr>
@@ -79,6 +83,17 @@
                                <!-- Data akan diisi melalui JavaScript -->
                            </tbody>
                        </table>
+                       <!-- Tambah pagination -->
+                       <div class="d-flex justify-content-between align-items-center">
+                           <div>
+                               <span>Menampilkan <span id="startIndex">0</span> - <span id="endIndex">0</span> dari <span id="totalItems">0</span> pengguna</span>
+                           </div>
+                           <nav aria-label="User pagination">
+                               <ul class="pagination" id="pagination">
+                                   <!-- Pagination akan diisi oleh JavaScript -->
+                               </ul>
+                           </nav>
+                       </div>
                    </div>
                </div>
            </div>
@@ -94,26 +109,30 @@
                    <div class="modal-body">
                        <form id="addUserForm">
                            <div class="mb-3">
-                               <label class="form-label">Foto Profil</label>
-                               <input type="file" class="form-control" accept="image/*" required>
-                           </div>
-                           <div class="mb-3">
                                <label class="form-label">Username</label>
-                               <input type="text" class="form-control" required>
+                               <input type="text" name="username" class="form-control" required>
                            </div>
                            <div class="mb-3">
                                <label class="form-label">Email</label>
-                               <input type="email" class="form-control" required>
+                               <input type="email" name="email" class="form-control" required>
+                           </div>
+                           <div class="mb-3">
+                               <label class="form-label">Nama Depan</label>
+                               <input type="text" name="firstname" class="form-control" required>
+                           </div>
+                           <div class="mb-3">
+                               <label class="form-label">Nama Belakang</label>
+                               <input type="text" name="lastname" class="form-control" required>
                            </div>
                            <div class="mb-3">
                                <label class="form-label">Password</label>
-                               <input type="password" class="form-control" required>
+                               <input type="password" name="password" class="form-control" required>
                            </div>
                        </form>
                    </div>
                    <div class="modal-footer">
                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                       <button type="button" class="btn btn-primary">Simpan</button>
+                       <button type="button" class="btn btn-primary" onclick="saveNewUser()">Simpan</button>
                    </div>
                </div>
            </div>
@@ -211,91 +230,176 @@
    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
    <script>
-       // Data contoh pengguna
-       const users = [
-           { id: 1, picture: 'https://via.placeholder.com/50', username: 'john_doe', email: 'john@example.com' },
-           { id: 2, picture: 'https://via.placeholder.com/50', username: 'jane_doe', email: 'jane@example.com' }
-       ];
+       // Konfigurasi Moodle API
+       const MOODLE_URL = 'https://papeda.papuakasih.sch.id/webservice/rest/server.php';
+       const TOKEN = 'd3a280eb7e7f553713334ee65754fe12';
+       
+       let users = [];
+       let currentPage = 1;
+       const itemsPerPage = 10;
 
-       let userToDelete = null;
+       async function loadMoodleUsers() {
+           try {
+               // Build the URL with the correct query parameter format
+               const queryParams = new URLSearchParams({
+                   wstoken: TOKEN,
+                   wsfunction: 'core_user_get_users',
+                   moodlewsrestformat: 'json',
+                   'criteria[0][key]': 'username',
+                   'criteria[0][value]': '%'  // Using % as wildcard to match any username
+               });
 
-        // Fungsi untuk menampilkan data pengguna
-       function displayUsers() {
-           const tableBody = document.getElementById('userTableBody');
-           tableBody.innerHTML = users.map(user => `
-               <tr>
-                   <td><img src="${user.picture}" class="user-image" alt="Profile"></td>
-                   <td>${user.username}</td>
-                   <td>${user.email}</td>
-                   <td>
-                       <button class="btn btn-info btn-sm" onclick="showUserDetail(${user.id})">Detail</button>
-                       <button class="btn btn-warning btn-sm" onclick="editUser(${user.id})">Ubah</button>
-                       <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">Hapus</button>
-                   </td>
-               </tr>
-           `).join('');
-       }
-        // Fungsi-fungsi lainnya
-       function logout() {
-           sessionStorage.clear();
-           window.location.href = 'login.html';
-       }
-        function showUserDetail(userId) {
-           const user = users.find(u => u.id === userId);
-           const detailContent = document.getElementById('userDetailContent');
-           detailContent.innerHTML = `
-               <div class="text-center mb-3">
-                   <img src="${user.picture}" class="img-fluid rounded-circle" style="width: 150px;">
-               </div>
-               <p><strong>Username:</strong> ${user.username}</p>
-               <p><strong>Email:</strong> ${user.email}</p>
-           `;
-           new bootstrap.Modal(document.getElementById('userDetailModal')).show();
-       }
+               // Add a second criteria to filter by auth method
+               queryParams.append('criteria[1][key]', 'auth');
+               queryParams.append('criteria[1][value]', 'manual');
 
-       function editUser(userId) {
-           const user = users.find(u => u.id === userId);
-           document.getElementById('editUsername').value = user.username;
-           document.getElementById('editEmail').value = user.email;
-           document.getElementById('currentUserImage').src = user.picture;
-           new bootstrap.Modal(document.getElementById('editUserModal')).show();
-       }
-
-       function deleteUser(userId) {
-           const user = users.find(u => u.id === userId);
-           userToDelete = user;
-           document.getElementById('deleteUsername').textContent = user.username;
-           new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
-       }
-
-       function confirmDelete() {
-           if (userToDelete) {
-               const index = users.findIndex(u => u.id === userToDelete.id);
-               if (index > -1) {
-                   users.splice(index, 1);
+               const response = await fetch(`${MOODLE_URL}?${queryParams}`);
+               const data = await response.json();
+               
+               if (data.users) {
+                   users = data.users.filter(user => user.id > 1); // Filter out admin user
                    displayUsers();
+                   console.log('Fetched users:', data.users); // Debug log
+                   console.log('API Response:', data); // Additional debug log
+               } else {
+                   console.error('No users data in response:', data);
                }
-               userToDelete = null;
-               bootstrap.Modal.getInstance(document.getElementById('deleteUserModal')).hide();
+           } catch (error) {
+               console.error('Error memuat pengguna:', error);
+               alert('Gagal memuat data pengguna');
            }
        }
 
-        // Event listener untuk DOMContentLoaded
+       function displayUsers() {
+           const tableBody = document.getElementById('userTableBody');
+           const totalItems = users.length;
+           
+           // Calculate pagination
+           const startIndex = (currentPage - 1) * itemsPerPage;
+           const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+           
+           // Update pagination info
+           document.getElementById('startIndex').textContent = totalItems ? startIndex + 1 : 0;
+           document.getElementById('endIndex').textContent = endIndex;
+           document.getElementById('totalItems').textContent = totalItems;
+           
+           // Display current page items
+           tableBody.innerHTML = users
+               .slice(startIndex, endIndex)
+               .map(user => `
+                   <tr>
+                       <td><img src="${user.profileimageurl || 'https://via.placeholder.com/50'}" class="user-image" alt="Profile"></td>
+                       <td>${user.username}</td>
+                       <td>${user.firstname} ${user.lastname}</td>
+                       <td>${user.email}</td>
+                       <td>
+                           <button class="btn btn-info btn-sm" onclick="showUserDetail(${user.id})">Detail</button>
+                           <button class="btn btn-warning btn-sm" onclick="editUser(${user.id})">Ubah</button>
+                           <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">Hapus</button>
+                       </td>
+                   </tr>
+               `).join('');
+           
+           updatePagination(Math.ceil(totalItems / itemsPerPage));
+       }
+
+       function updatePagination(totalPages) {
+           const pagination = document.getElementById('pagination');
+           let paginationHTML = '';
+           
+           // Previous button
+           paginationHTML += `
+               <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                   <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">&laquo;</a>
+               </li>
+           `;
+           
+           // Page numbers
+           for (let i = 1; i <= totalPages; i++) {
+               paginationHTML += `
+                   <li class="page-item ${currentPage === i ? 'active' : ''}">
+                       <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                   </li>
+               `;
+           }
+           
+           // Next button
+           paginationHTML += `
+               <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                   <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">&raquo;</a>
+               </li>
+           `;
+           
+           pagination.innerHTML = paginationHTML;
+       }
+
+       function changePage(newPage) {
+           const totalPages = Math.ceil(users.length / itemsPerPage);
+           if (newPage >= 1 && newPage <= totalPages) {
+               currentPage = newPage;
+               displayUsers();
+           }
+       }
+
+       async function saveNewUser() {
+           const form = document.getElementById('addUserForm');
+           const formData = new FormData(form);
+           
+           try {
+               const response = await fetch(MOODLE_URL, {
+                   method: 'POST',
+                   body: new URLSearchParams({
+                       wstoken: TOKEN,
+                       wsfunction: 'core_user_create_users',
+                       moodlewsrestformat: 'json',
+                       users: JSON.stringify([{
+                           username: formData.get('username'),
+                           password: formData.get('password'),
+                           firstname: formData.get('firstname'),
+                           lastname: formData.get('lastname'),
+                           email: formData.get('email'),
+                           auth: 'manual'
+                       }])
+                   })
+               });
+
+               const data = await response.json();
+               
+               if (data.exception) {
+                   throw new Error(data.message);
+               }
+
+               bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+               form.reset();
+               await loadMoodleUsers();
+               alert('Pengguna berhasil ditambahkan!');
+           } catch (error) {
+               alert('Gagal menambahkan pengguna: ' + error.message);
+           }
+       }
+
+       // Event listeners
        document.addEventListener('DOMContentLoaded', function() {
            const isLoggedIn = sessionStorage.getItem('isLoggedIn');
            const username = sessionStorage.getItem('username');
            
            if (!isLoggedIn || !username) {
                window.location.href = 'login.html';
+               return;
            }
            
-           displayUsers();
+           loadMoodleUsers();
            
            setTimeout(function() {
                document.getElementById('loading').style.display = 'none';
                document.getElementById('content').style.display = 'block';
            }, 2000);
        });
+
+       function logout() {
+           sessionStorage.clear();
+           window.location.href = 'login.html';
+       }
    </script>
 </body>
 </html>
