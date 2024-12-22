@@ -93,7 +93,111 @@
                </div>
            </div>
        </div>
-        <!-- Modal Logout -->
+
+       <!-- Modal Tambah Kursus -->
+       <div class="modal fade" id="addCourseModal" tabindex="-1">
+           <div class="modal-dialog">
+               <div class="modal-content">
+                   <div class="modal-header">
+                       <h5 class="modal-title">Tambah Kursus Baru</h5>
+                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                   </div>
+                   <div class="modal-body">
+                       <form id="addCourseForm">
+                           <div class="mb-3">
+                               <label class="form-label">Cover Kursus</label>
+                               <input type="file" class="form-control" accept="image/*">
+                           </div>
+                           <div class="mb-3">
+                               <label class="form-label">Judul Kursus</label>
+                               <input type="text" class="form-control" required>
+                           </div>
+                           <div class="mb-3">
+                               <label class="form-label">Deskripsi</label>
+                               <textarea class="form-control" rows="3"></textarea>
+                           </div>
+                       </form>
+                   </div>
+                   <div class="modal-footer">
+                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                       <button type="button" class="btn btn-primary">Simpan</button>
+                   </div>
+               </div>
+           </div>
+       </div>
+
+       <!-- Modal Detail Kursus -->
+       <div class="modal fade" id="courseDetailModal" tabindex="-1">
+           <div class="modal-dialog">
+               <div class="modal-content">
+                   <div class="modal-header">
+                       <h5 class="modal-title">Detail Kursus</h5>
+                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                   </div>
+                   <div class="modal-body" id="courseDetailContent">
+                       <!-- Content will be filled by JavaScript -->
+                   </div>
+                   <div class="modal-footer">
+                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                   </div>
+               </div>
+           </div>
+       </div>
+
+       <!-- Modal Ubah Kursus -->
+       <div class="modal fade" id="editCourseModal" tabindex="-1">
+           <div class="modal-dialog">
+               <div class="modal-content">
+                   <div class="modal-header">
+                       <h5 class="modal-title">Ubah Kursus</h5>
+                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                   </div>
+                   <div class="modal-body">
+                       <form id="editCourseForm">
+                           <div class="mb-3">
+                               <label class="form-label">Cover Kursus</label>
+                               <input type="file" class="form-control" accept="image/*">
+                               <img id="currentCourseImage" src="" alt="Current Cover" class="mt-2" style="max-width: 100px;">
+                           </div>
+                           <div class="mb-3">
+                               <label class="form-label">Judul Kursus</label>
+                               <input type="text" class="form-control" id="editCourseTitle" required>
+                           </div>
+                           <div class="mb-3">
+                               <label class="form-label">Deskripsi</label>
+                               <textarea class="form-control" id="editCourseDescription" rows="3"></textarea>
+                           </div>
+                       </form>
+                   </div>
+                   <div class="modal-footer">
+                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                       <button type="button" class="btn btn-primary">Simpan Perubahan</button>
+                   </div>
+               </div>
+           </div>
+       </div>
+
+       <!-- Modal Konfirmasi Hapus -->
+       <div class="modal fade" id="deleteCourseModal" tabindex="-1">
+           <div class="modal-dialog">
+               <div class="modal-content">
+                   <div class="modal-header">
+                       <h5 class="modal-title">Konfirmasi Hapus</h5>
+                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                   </div>
+                   <div class="modal-body">
+                       <p>Apakah Anda yakin ingin menghapus kursus ini?</p>
+                       <p>Judul: <span id="deleteCourseTitle"></span></p>
+                   </div>
+                   <div class="modal-footer">
+                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                       <button type="button" class="btn btn-danger">Hapus</button>
+                   </div>
+               </div>
+           </div>
+       </div>
+
+       <!-- Modal Logout -->
        <div class="modal fade" id="logoutModal" tabindex="-1">
            <div class="modal-dialog">
                <div class="modal-content">
@@ -117,6 +221,55 @@
        let courses = [];
        let currentPage = 1;
        const itemsPerPage = 10;
+
+       // Function to show course detail
+       function showCourseDetail(courseId) {
+           const course = courses.find(c => c.id === courseId);
+           if (course) {
+               const detailContent = document.getElementById('courseDetailContent');
+               detailContent.innerHTML = `
+                   <div class="text-center mb-3">
+                       <img src="${course.courseimageurl || 'https://papeda.papuakasih.sch.id/theme/moove/pix/default_course.jpg'}" 
+                            alt="Course Cover" style="max-width: 200px;">
+                   </div>
+                   <div class="mb-3">
+                       <strong>ID Kursus:</strong> ${course.id}
+                   </div>
+                   <div class="mb-3">
+                       <strong>Judul:</strong> ${course.fullname}
+                   </div>
+                   <div class="mb-3">
+                       <strong>Deskripsi:</strong><br>
+                       ${course.summary || 'Tidak ada deskripsi'}
+                   </div>
+               `;
+               const modal = new bootstrap.Modal(document.getElementById('courseDetailModal'));
+               modal.show();
+           }
+       }
+
+       // Function to edit course
+       function editCourse(courseId) {
+           const course = courses.find(c => c.id === courseId);
+           if (course) {
+               document.getElementById('editCourseTitle').value = course.fullname;
+               document.getElementById('editCourseDescription').value = course.summary || '';
+               document.getElementById('currentCourseImage').src = course.courseimageurl || 'https://papeda.papuakasih.sch.id/theme/moove/pix/default_course.jpg';
+               const modal = new bootstrap.Modal(document.getElementById('editCourseModal'));
+               modal.show();
+           }
+       }
+
+       // Function to delete course
+       function deleteCourse(courseId) {
+           const course = courses.find(c => c.id === courseId);
+           if (course) {
+               document.getElementById('deleteCourseTitle').textContent = course.fullname;
+               const modal = new bootstrap.Modal(document.getElementById('deleteCourseModal'));
+               modal.show();
+           }
+       }
+
         async function fetchCourses() {
            const moodleUrl = 'https://papeda.papuakasih.sch.id/webservice/rest/server.php';
            const params = new URLSearchParams({
