@@ -1,108 +1,240 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daftar Kursus Moodle</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link 
-    href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" 
-    rel="stylesheet"
-  >
-  <script>
-    let courses = [];
-    let currentPage = 1;
-    const coursesPerPage = 6;
-
-    async function fetchCourses() {
-      const moodleUrl = 'https://papeda.papuakasih.sch.id/webservice/rest/server.php';
-      const params = new URLSearchParams({
-        wstoken: 'd3a280eb7e7f553713334ee65754fe12',
-        wsfunction: 'core_course_get_courses',
-        moodlewsrestformat: 'json'
-      });
-
-      try {
-        const response = await fetch(`${moodleUrl}?${params.toString()}`);
-        if (!response.ok) throw new Error(`HTTP Error! Status: ${response.status}`);
-        courses = await response.json();
-        displayCourses();
-        setupPagination();
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-      }
-    }
-
-    function displayCourses() {
-      const courseContainer = document.getElementById('courses');
-      const button = document.getElementById('addButton');
-      const startIndex = (currentPage - 1) * coursesPerPage;
-      const endIndex = startIndex + coursesPerPage;
-      const paginatedCourses = courses.slice(startIndex, endIndex);
-
-      button.innerHTML = '<div class="mb-4"><a href="#" class="btn btn-primary"><i class="fa-solid fa-folder-plus"></i> Tambah</a> <a href="index.html" class="btn btn-outline-dark border-0 float-end"><i class="fa-solid fa-right-from-bracket"></i> Keluar</a></div>';
-      paginatedCourses.forEach(course => {
-        if (course.id > 1) {
-          const courseImage = course.courseimageurl ? 
-                              `<img src="${course.courseimageurl}" class="card-img-top" alt="Image for ${course.fullname}">` :
-                              `<img src="https://papeda.papuakasih.sch.id/theme/moove/pix/default_course.jpg" class="card-img-top" alt="Image not available">`;
-
-          const courseCard = `
-            <div class="col-md-4 mb-4">
-              <div class="card h-100">
-                ${courseImage}
-                <div class="card-body">
-                  <h5 class="card-title">${course.fullname}</h5>
-                  <p class="card-text"><strong>ID:</strong> ${course.id}</p>
-                  <p class="card-text"><strong>Short Name:</strong> ${course.shortname}</p>
-                  <a href="detail.html?id=${course.id}" class="btn btn-success"><i class="fa-solid fa-file-lines"></i> Detail</a>
-                  <a href="ubah.html?id=${course.id}" class="btn btn-outline-warning border-0"><i class="fa-solid fa-file-pen"></i></a>
-                  <a href="hapus.html?id=${course.id}" class="btn btn-outline-danger border-0"><i class="fa-solid fa-trash"></i></a>
-                </div>
-              </div>
-            </div>
-          `;
-          courseContainer.innerHTML += courseCard;
-        }
-      });
-    }
-
-    function setupPagination() {
-      const totalPages = Math.ceil(courses.length / coursesPerPage);
-      const paginationContainer = document.getElementById('pagination');
-      paginationContainer.innerHTML = ''; // Reset pagination
-
-      for (let i = 1; i <= totalPages; i++) {
-        const pageButton = document.createElement('button');
-        pageButton.classList.add('btn', 'btn-outline-primary', 'mx-1');
-        pageButton.innerText = i;
-        pageButton.onclick = () => changePage(i);
-        if (i === currentPage) {
-          pageButton.classList.add('active');
-        }
-        paginationContainer.appendChild(pageButton);
-      }
-    }
-
-    function changePage(pageNumber) {
-      currentPage = pageNumber;
-      displayCourses();
-      setupPagination();
-    }
-
-    // Fetch courses automatically when page loads
-    window.onload = fetchCourses;
-  </script>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Kursus</title>
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+   <style>
+       #loading {
+           position: fixed;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%;
+           background-color: #fff;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           z-index: 9999;
+       }
+       #content {
+           display: none;
+       }
+       .course-image {
+           width: 100px;
+           height: 60px;
+           object-fit: cover;
+       }
+   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 class="text-center my-5">Daftar Kursus Moodle</h1>
-    <div class="" id="addButton"></div>
-    <div class="row" id="courses"></div>
-    <div class="text-center my-4" id="pagination"></div>
-  </div>
-  <script 
-    src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js">
-  </script>
+   <div id="loading">
+       <div class="spinner-border text-primary" role="status">
+           <span class="visually-hidden">Memuat...</span>
+       </div>
+   </div>
+   <div id="content">
+       <!-- Navbar -->
+       <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+           <div class="container">
+               <a class="navbar-brand" href="dashboard.html">Sistem Manajemen Pembelajaran</a>
+               <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                   <span class="navbar-toggler-icon"></span>
+               </button>
+               <div class="collapse navbar-collapse" id="navbarNav">
+                   <ul class="navbar-nav me-auto">
+                       <li class="nav-item">
+                           <a class="nav-link" href="users.html">Pengguna</a>
+                       </li>
+                       <li class="nav-item">
+                           <a class="nav-link active" href="courses.html">Kursus</a>
+                       </li>
+                   </ul>
+                   <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#logoutModal">Keluar</button>
+               </div>
+           </div>
+       </nav>
+        <div class="container mt-4">
+           <div class="card">
+               <div class="card-header d-flex justify-content-between align-items-center">
+                   <h5 class="mb-0">Daftar Kursus</h5>
+                   <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                       Tambah Kursus
+                   </button>
+               </div>
+               <div class="card-body">
+                   <div class="table-responsive">
+                       <table class="table table-hover">
+                           <thead>
+                               <tr>
+                                   <th>Cover</th>
+                                   <th>ID Kursus</th>
+                                   <th>Judul Kursus</th>
+                                   <th>Aksi</th>
+                               </tr>
+                           </thead>
+                           <tbody id="courseTableBody">
+                               <!-- Data akan diisi melalui JavaScript -->
+                           </tbody>
+                       </table>
+                       <!-- Add pagination container -->
+                       <div class="d-flex justify-content-between align-items-center">
+                           <div>
+                               <span>Menampilkan <span id="startIndex">0</span> - <span id="endIndex">0</span> dari <span id="totalItems">0</span> kursus</span>
+                           </div>
+                           <nav aria-label="Course pagination">
+                               <ul class="pagination" id="pagination">
+                                   <!-- Pagination will be filled by JavaScript -->
+                               </ul>
+                           </nav>
+                       </div>
+                   </div>
+               </div>
+           </div>
+       </div>
+        <!-- Modal Logout -->
+       <div class="modal fade" id="logoutModal" tabindex="-1">
+           <div class="modal-dialog">
+               <div class="modal-content">
+                   <div class="modal-header">
+                       <h5 class="modal-title">Konfirmasi Keluar</h5>
+                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                   </div>
+                   <div class="modal-body">
+                       Apakah Anda yakin ingin keluar?
+                   </div>
+                   <div class="modal-footer">
+                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                       <button type="button" class="btn btn-primary" onclick="logout()">Ya, Keluar</button>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+   <script>
+       let courses = [];
+       let currentPage = 1;
+       const itemsPerPage = 10;
+        async function fetchCourses() {
+           const moodleUrl = 'https://papeda.papuakasih.sch.id/webservice/rest/server.php';
+           const params = new URLSearchParams({
+               wstoken: 'd3a280eb7e7f553713334ee65754fe12',
+               wsfunction: 'core_course_get_courses',
+               moodlewsrestformat: 'json'
+           });
+            try {
+               const response = await fetch(`${moodleUrl}?${params.toString()}`);
+               if (!response.ok) throw new Error(`HTTP Error! Status: ${response.status}`);
+               courses = await response.json();
+               displayCourses();
+           } catch (error) {
+               console.error('Error fetching courses:', error);
+           }
+       }
+        function displayCourses() {
+           const tableBody = document.getElementById('courseTableBody');
+           const filteredCourses = courses.filter(course => course.id > 1);
+           const totalItems = filteredCourses.length;
+           
+           // Calculate pagination
+           const totalPages = Math.ceil(totalItems / itemsPerPage);
+           const startIndex = (currentPage - 1) * itemsPerPage;
+           const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+           
+           // Update pagination info
+           document.getElementById('startIndex').textContent = totalItems ? startIndex + 1 : 0;
+           document.getElementById('endIndex').textContent = endIndex;
+           document.getElementById('totalItems').textContent = totalItems;
+           
+           // Display current page items
+           tableBody.innerHTML = filteredCourses
+               .slice(startIndex, endIndex)
+               .map(course => {
+                   const courseImage = course.courseimageurl || 'https://papeda.papuakasih.sch.id/theme/moove/pix/default_course.jpg';
+                   return `
+                       <tr>
+                           <td><img src="${courseImage}" class="course-image" alt="Course Cover"></td>
+                           <td>${course.id}</td>
+                           <td>${course.fullname}</td>
+                           <td>
+                               <button class="btn btn-info btn-sm" onclick="showCourseDetail(${course.id})">Detail</button>
+                               <button class="btn btn-warning btn-sm" onclick="editCourse(${course.id})">Ubah</button>
+                               <button class="btn btn-danger btn-sm" onclick="deleteCourse(${course.id})">Hapus</button>
+                           </td>
+                       </tr>
+                   `;
+               }).join('');
+           
+           // Update pagination buttons
+           updatePagination(totalPages);
+       }
+        function updatePagination(totalPages) {
+           const pagination = document.getElementById('pagination');
+           let paginationHTML = '';
+           
+           // Previous button
+           paginationHTML += `
+               <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                   <a class="page-link" href="#" onclick="changePage(${currentPage - 1})" aria-label="Previous">
+                       <span aria-hidden="true">&laquo;</span>
+                   </a>
+               </li>
+           `;
+           
+           // Page numbers
+           for (let i = 1; i <= totalPages; i++) {
+               paginationHTML += `
+                   <li class="page-item ${currentPage === i ? 'active' : ''}">
+                       <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                   </li>
+               `;
+           }
+           
+           // Next button
+           paginationHTML += `
+               <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                   <a class="page-link" href="#" onclick="changePage(${currentPage + 1})" aria-label="Next">
+                       <span aria-hidden="true">&raquo;</span>
+                   </a>
+               </li>
+           `;
+           
+           pagination.innerHTML = paginationHTML;
+       }
+        function changePage(newPage) {
+           const filteredCourses = courses.filter(course => course.id > 1);
+           const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
+           
+           if (newPage >= 1 && newPage <= totalPages) {
+               currentPage = newPage;
+               displayCourses();
+           }
+       }
+        document.addEventListener('DOMContentLoaded', function() {
+           const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+           const username = sessionStorage.getItem('username');
+           
+           if (!isLoggedIn || !username) {
+               window.location.href = 'login.html';
+           }
+           
+           fetchCourses();
+           
+           setTimeout(function() {
+               document.getElementById('loading').style.display = 'none';
+               document.getElementById('content').style.display = 'block';
+           }, 2000);
+       });
+        function logout() {
+           sessionStorage.clear();
+           window.location.href = 'login.html';
+           const logoutModal = bootstrap.Modal.getInstance(document.getElementById('logoutModal'));
+           if (logoutModal) {
+               logoutModal.hide();
+           }
+       }
+   </script>
 </body>
 </html>

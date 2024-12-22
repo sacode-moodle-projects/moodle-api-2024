@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h3 class="card-title text-center mb-4">Login</h3>
+                        <form id="loginForm" class="needs-validation" novalidate>
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" required>
+                                <div class="invalid-feedback">
+                                    Silakan masukkan username Anda.
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" required>
+                                <div class="invalid-feedback">
+                                    Silakan masukkan password Anda.
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Login</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Error -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="errorModalLabel">Kesalahan Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Username atau password tidak valid. Silakan coba lagi.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Komentar penjelasan kode JavaScript -->
+    <script>
+        // Mendefinisikan username dan password default untuk login
+        const defaultUsername = "admin";
+        const defaultPassword = "password123";
+
+        // Event listener yang akan dijalankan ketika halaman selesai dimuat
+        // Memeriksa apakah pengguna sudah login sebelumnya dengan mengecek sessionStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+            const username = sessionStorage.getItem('username');
+            
+            // Jika pengguna sudah login, arahkan ke halaman dashboard
+            if (isLoggedIn && username) {
+                window.location.href = 'dashboard.html';
+            }
+        });
+
+        // Event listener untuk form login ketika di-submit
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            // Mencegah form melakukan submit default
+            e.preventDefault();
+            
+            // Tambahkan class was-validated untuk menampilkan validasi bootstrap
+            this.classList.add('was-validated');
+            
+            // Mengambil nilai username dan password yang diinput pengguna
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Validasi input dan pengecekan kredensial
+            if (username && password) {
+                // Memeriksa apakah username dan password sesuai dengan yang default
+                if (username === defaultUsername && password === defaultPassword) {
+                    // Jika sesuai, simpan status login dan username ke sessionStorage
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('username', username);
+                    // Arahkan ke halaman dashboard
+                    window.location.href = 'dashboard.html';
+                } else {
+                    // Jika tidak sesuai, tampilkan modal error
+                    const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+                    errorModal.show();
+                }
+            }
+        });
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

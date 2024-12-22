@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Registered Users</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 18px;
+            text-align: left;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        table th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h1>List of All Registered Users</h1>
+    <button onclick="fetchAllUsers()">Fetch All Users</button>
+
+    <table id="userTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Username</th>
+                <th>City</th>
+                <th>Country</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchAllUsers() {
+            const moodleUrl = 'https://papeda.papuakasih.sch.id/webservice/rest/server.php';
+            const token = 'd3a280eb7e7f553713334ee65754fe12';
+
+            const params = new URLSearchParams({
+                wstoken: token,
+                wsfunction: 'core_user_get_users',
+                moodlewsrestformat: 'json',
+                'criteria[0][key]': 'email',
+                'criteria[0][value]': '%'
+            });
+
+            try {
+                const response = await fetch(`${moodleUrl}?${params}`);
+                const data = await response.json();
+
+                console.log('Response:', data);
+                
+                if (data.exception) {
+                    console.error('Moodle API Error:', data.message);
+                    alert(`Moodle API Error: ${data.message}`);
+                    return;
+                }
+
+                if (response.ok && data.users) {
+                    populateTable(data.users);
+                } else {
+                    console.error('Error fetching users:', data);
+                    alert('Failed to fetch data. Please check the console for details.');
+                }
+            } catch (error) {
+                console.error('Network or API error:', error);
+                alert('Network or API error occurred. Please try again.');
+            }
+        }
+
+        function populateTable(users) {
+            const tableBody = document.getElementById('userTable').querySelector('tbody');
+            tableBody.innerHTML = ''; // Clear existing data
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+
+                const idCell = document.createElement('td');
+                idCell.textContent = user.id;
+                row.appendChild(idCell);
+
+                const nameCell = document.createElement('td');
+                nameCell.textContent = user.fullname;
+                row.appendChild(nameCell);
+
+                const emailCell = document.createElement('td');
+                emailCell.textContent = user.email;
+                row.appendChild(emailCell);
+
+                const usernameCell = document.createElement('td');
+                usernameCell.textContent = user.username;
+                row.appendChild(usernameCell);
+
+                const cityCell = document.createElement('td');
+                cityCell.textContent = user.city || 'N/A';
+                row.appendChild(cityCell);
+
+                const countryCell = document.createElement('td');
+                countryCell.textContent = user.country || 'N/A';
+                row.appendChild(countryCell);
+
+                tableBody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>
