@@ -132,6 +132,64 @@
                </div>
            </div>
        </div>
+
+       <!-- Modal Ubah Pengguna -->
+       <div class="modal fade" id="editUserModal" tabindex="-1">
+           <div class="modal-dialog">
+               <div class="modal-content">
+                   <div class="modal-header">
+                       <h5 class="modal-title">Ubah Pengguna</h5>
+                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                   </div>
+                   <div class="modal-body">
+                       <form id="editUserForm">
+                           <div class="mb-3">
+                               <label class="form-label">Foto Profil</label>
+                               <input type="file" class="form-control" accept="image/*">
+                               <img id="currentUserImage" src="" alt="Current Profile" class="mt-2" style="max-width: 100px;">
+                           </div>
+                           <div class="mb-3">
+                               <label class="form-label">Username</label>
+                               <input type="text" class="form-control" id="editUsername" required>
+                           </div>
+                           <div class="mb-3">
+                               <label class="form-label">Email</label>
+                               <input type="email" class="form-control" id="editEmail" required>
+                           </div>
+                           <div class="mb-3">
+                               <label class="form-label">Password Baru (kosongkan jika tidak ingin mengubah)</label>
+                               <input type="password" class="form-control" id="editPassword">
+                           </div>
+                       </form>
+                   </div>
+                   <div class="modal-footer">
+                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                       <button type="button" class="btn btn-primary" onclick="updateUser()">Simpan Perubahan</button>
+                   </div>
+               </div>
+           </div>
+       </div>
+
+       <!-- Modal Konfirmasi Hapus -->
+       <div class="modal fade" id="deleteUserModal" tabindex="-1">
+           <div class="modal-dialog">
+               <div class="modal-content">
+                   <div class="modal-header">
+                       <h5 class="modal-title">Konfirmasi Hapus</h5>
+                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                   </div>
+                   <div class="modal-body">
+                       <p>Apakah Anda yakin ingin menghapus pengguna ini?</p>
+                       <p>Username: <span id="deleteUsername"></span></p>
+                   </div>
+                   <div class="modal-footer">
+                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                       <button type="button" class="btn btn-danger" onclick="confirmDelete()">Hapus</button>
+                   </div>
+               </div>
+           </div>
+       </div>
+
         <!-- Modal Logout (sama seperti dashboard) -->
        <div class="modal fade" id="logoutModal" tabindex="-1">
            <div class="modal-dialog">
@@ -158,6 +216,9 @@
            { id: 1, picture: 'https://via.placeholder.com/50', username: 'john_doe', email: 'john@example.com' },
            { id: 2, picture: 'https://via.placeholder.com/50', username: 'jane_doe', email: 'jane@example.com' }
        ];
+
+       let userToDelete = null;
+
         // Fungsi untuk menampilkan data pengguna
        function displayUsers() {
            const tableBody = document.getElementById('userTableBody');
@@ -191,6 +252,34 @@
            `;
            new bootstrap.Modal(document.getElementById('userDetailModal')).show();
        }
+
+       function editUser(userId) {
+           const user = users.find(u => u.id === userId);
+           document.getElementById('editUsername').value = user.username;
+           document.getElementById('editEmail').value = user.email;
+           document.getElementById('currentUserImage').src = user.picture;
+           new bootstrap.Modal(document.getElementById('editUserModal')).show();
+       }
+
+       function deleteUser(userId) {
+           const user = users.find(u => u.id === userId);
+           userToDelete = user;
+           document.getElementById('deleteUsername').textContent = user.username;
+           new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
+       }
+
+       function confirmDelete() {
+           if (userToDelete) {
+               const index = users.findIndex(u => u.id === userToDelete.id);
+               if (index > -1) {
+                   users.splice(index, 1);
+                   displayUsers();
+               }
+               userToDelete = null;
+               bootstrap.Modal.getInstance(document.getElementById('deleteUserModal')).hide();
+           }
+       }
+
         // Event listener untuk DOMContentLoaded
        document.addEventListener('DOMContentLoaded', function() {
            const isLoggedIn = sessionStorage.getItem('isLoggedIn');
